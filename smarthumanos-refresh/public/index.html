@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartHumanOS - ระบบบริหารทรัพยากรบุคคล</title>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{
+      --card: 255,255,255;
+      --muted: 107,114,128;
+      --ring: 59,130,246;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{ --card: 17,24,39; --muted: 156,163,175; }
+      body{ background-color:#0b1220; }
+    }
+    body { font-family: 'Prompt', sans-serif; background-color: #f6f8fb; }
+    .gradient-bg { background: radial-gradient(1200px 600px at 20% -10%, #60a5fa33, transparent 60%), linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .glass { background: rgba(var(--card), 0.9); backdrop-filter: saturate(180%) blur(16px); }
+    .card { border: 1px solid rgba(0,0,0,0.05); }
+    .card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.06), 0 6px 12px rgba(0,0,0,0.04); transform: translateY(-2px); }
+    .sidebar-link { transition: all .25s ease; }
+    .sidebar-link:hover { background-color: rgba(59,130,246, .08); border-left: 4px solid #3b82f6; }
+    .sidebar-link.active { background-color: rgba(59,130,246, .12); border-left: 4px solid #3b82f6; }
+    .btn { transition: all .2s ease; }
+    .btn:focus { outline: 2px solid rgba(var(--ring),.25); outline-offset: 2px; }
+    .shadow-soft{ box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div id="app" class="min-h-screen">
+    <!-- Login Page -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center p-4">
+      <div class="w-full max-w-md rounded-2xl shadow-soft overflow-hidden glass card">
+        <div class="gradient-bg p-6 text-center">
+          <h1 class="text-3xl font-bold text-white mb-1 tracking-tight">SmartHumanOS</h1>
+          <p class="text-blue-100">ระบบบริหารทรัพยากรบุคคลอัจฉริยะ</p>
+        </div>
+        <div class="p-6 space-y-5">
+          <div class="space-y-3">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 text-center">เข้าสู่ระบบ</h2>
+            <div class="space-y-2">
+              <input id="email" type="email" placeholder="อีเมล" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <input id="password" type="password" placeholder="รหัสผ่าน" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="signin-email" class="btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">เข้าสู่ระบบ</button>
+              <button id="signup-email" class="btn px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800">สมัครสมาชิก</button>
+            </div>
+            <div class="flex items-center">
+              <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+              <span class="px-3 text-xs text-gray-400">หรือ</span>
+              <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+            </div>
+            <button id="signin-google" class="btn w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center gap-2">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5 h-5" alt="G"> เข้าสู่ระบบด้วย Google
+            </button>
+          </div>
+
+          <!-- Role bootstrap -->
+          <div id="role-bootstrap" class="hidden">
+            <h3 class="text-md font-medium text-gray-700 dark:text-gray-200 text-center mb-2">เลือกบทบาทของคุณ (ครั้งแรกเท่านั้น)</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button id="choose-hr" class="card-hover p-5 bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl flex flex-col items-center hover:bg-blue-50">
+                <div class="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center mb-3">
+                  <i class="fas fa-user-tie text-xl text-blue-600"></i>
+                </div>
+                <div class="text-gray-800 dark:text-gray-200 font-medium">HR Admin</div>
+                <div class="text-xs text-gray-500">จัดการข้อมูลพนักงานทั้งหมด</div>
+              </button>
+              <button id="choose-employee" class="card-hover p-5 bg-white/80 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-xl flex flex-col items-center hover:bg-blue-50">
+                <div class="h-14 w-14 rounded-full bg-blue-100 flex items-center justify-center mb-3">
+                  <i class="fas fa-user text-xl text-blue-600"></i>
+                </div>
+                <div class="text-gray-800 dark:text-gray-200 font-medium">พนักงาน</div>
+                <div class="text-xs text-gray-500">ดูข้อมูลส่วนตัวของคุณ</div>
+              </button>
+            </div>
+            <p class="text-xs text-gray-500 text-center mt-2">* ผู้ดูแลระบบควรกำหนดบทบาท HR ให้เฉพาะผู้เกี่ยวข้อง</p>
+          </div>
+
+          <p class="text-center text-sm text-gray-500">© 2025 SmartHumanOS</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="hidden min-h-screen flex flex-col md:flex-row">
+      <!-- Sidebar -->
+      <div class="sidebar w-full md:w-64 glass card md:min-h-screen shadow-soft">
+        <div class="p-4 gradient-bg">
+          <h1 class="text-xl font-bold text-white">SmartHumanOS</h1>
+          <p class="text-sm text-blue-100" id="user-role"></p>
+        </div>
+        <div class="p-3 space-y-3">
+          <div class="flex items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+            <div class="h-10 w-10 rounded-full bg-blue-200 flex items-center justify-center mr-3">
+              <i class="fas fa-user text-blue-700"></i>
+            </div>
+            <div>
+              <p class="font-medium text-gray-800 dark:text-gray-100" id="user-name"></p>
+              <p class="text-xs text-gray-500" id="user-position"></p>
+            </div>
+          </div>
+          <nav>
+            <ul class="space-y-1">
+              <li><a href="#" onclick="showPage('dashboard')" class="sidebar-link active flex items-center p-3 rounded-lg"><i class="fas fa-chart-line w-6 text-gray-600"></i><span class="ml-2">แดชบอร์ด</span></a></li>
+              <li><a href="#" onclick="showPage('attendance')" class="sidebar-link flex items-center p-3 rounded-lg"><i class="fas fa-clock w-6 text-gray-600"></i><span class="ml-2">บันทึกเวลาทำงาน</span></a></li>
+              <li><a href="#" onclick="showPage('leave')" class="sidebar-link flex items-center p-3 rounded-lg"><i class="fas fa-calendar-alt w-6 text-gray-600"></i><span class="ml-2">ระบบลา</span></a></li>
+              <li id="hr-profile-menu" class="hidden"><a href="#" onclick="showPage('employee-profile')" class="sidebar-link flex items-center p-3 rounded-lg"><i class="fas fa-id-card w-6 text-gray-600"></i><span class="ml-2">ข้อมูลพนักงาน</span></a></li>
+              <li id="hr-org-menu" class="hidden"><a href="#" onclick="showPage('org-structure')" class="sidebar-link flex items-center p-3 rounded-lg"><i class="fas fa-sitemap w-6 text-gray-600"></i><span class="ml-2">โครงสร้างองค์กร</span></a></li>
+              <li id="hr-permission-menu" class="hidden"><a href="#" onclick="showPage('permissions')" class="sidebar-link flex items-center p-3 rounded-lg"><i class="fas fa-lock w-6 text-gray-600"></i><span class="ml-2">สิทธิ์การเข้าถึง</span></a></li>
+            </ul>
+          </nav>
+        </div>
+        <div class="mt-auto p-4 border-t border-gray-100 dark:border-gray-800">
+          <button id="logoutBtn" class="w-full btn flex items-center justify-center p-2 text-gray-700 dark:text-gray-200 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg">
+            <i class="fas fa-sign-out-alt mr-2"></i> ออกจากระบบ
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="flex-1 p-4 md:p-6 space-y-6 overflow-auto">
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 md:mb-0">แดชบอร์ด</h1>
+            <div class="relative">
+              <select id="employee-filter" class="appearance-none bg-white/80 dark:bg-gray-900/60 border border-gray-300 dark:border-gray-700 rounded-lg py-2 px-4 pr-8 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hidden">
+                <option value="all">พนักงานทั้งหมด</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-600"><i class="fas fa-chevron-down text-xs"></i></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="glass card rounded-xl p-4">
+              <div class="flex items-center">
+                <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mr-4"><i class="fas fa-briefcase text-blue-600"></i></div>
+                <div><p class="text-sm text-gray-500">วันทำงาน</p><p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="work-days">-</p></div>
+              </div>
+            </div>
+            <div class="glass card rounded-xl p-4">
+              <div class="flex items-center">
+                <div class="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center mr-4"><i class="fas fa-business-time text-green-600"></i></div>
+                <div><p class="text-sm text-gray-500">ลากิจ</p><p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="personal-leave">-</p></div>
+              </div>
+            </div>
+            <div class="glass card rounded-xl p-4">
+              <div class="flex items-center">
+                <div class="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center mr-4"><i class="fas fa-procedures text-yellow-600"></i></div>
+                <div><p class="text-sm text-gray-500">ลาป่วย</p><p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="sick-leave">-</p></div>
+              </div>
+            </div>
+            <div class="glass card rounded-xl p-4">
+              <div class="flex items-center">
+                <div class="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mr-4"><i class="fas fa-user-slash text-red-600"></i></div>
+                <div><p class="text-sm text-gray-500">ขาดงาน</p><p class="text-2xl font-bold text-gray-800 dark:text-gray-100" id="absent-days">-</p></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="glass card rounded-xl p-4">
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">สถิติการเข้า-ออกงาน</h2>
+              <div class="h-64"><canvas id="attendance-chart"></canvas></div>
+            </div>
+            <div class="glass card rounded-xl p-4">
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">สรุปสถานะประจำเดือน</h2>
+              <div class="h-64"><canvas id="status-chart"></canvas></div>
+            </div>
+          </div>
+
+          <div class="glass card rounded-xl p-4 overflow-x-auto">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">ตารางสรุปสถานะพนักงาน</h2>
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+              <thead>
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อพนักงาน</th>
+                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ทำงาน (วัน)</th>
+                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ลากิจ (วัน)</th>
+                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ลาป่วย (วัน)</th>
+                  <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">ขาดงาน (วัน)</th>
+                </tr>
+              </thead>
+              <tbody id="employee-summary-table" class="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-100 dark:divide-gray-800"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Attendance Page -->
+        <div id="attendance-page" class="page hidden">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 md:mb-0">บันทึกเวลาทำงาน</h1>
+            <div class="text-sm text-gray-500"><span id="current-date"></span> | <span id="current-time"></span></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="glass card rounded-xl p-6">
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">บันทึกเวลาวันนี้</h2>
+              <div class="flex flex-col items-center">
+                <div class="mb-6 text-center">
+                  <p class="text-sm text-gray-500 mb-1">สถานะวันนี้</p>
+                  <div class="text-lg font-medium text-blue-600" id="today-status">ทำงาน</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 w-full">
+                  <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-1">เวลาเข้างาน</p>
+                    <div class="text-xl font-bold text-gray-800 dark:text-gray-100" id="checkin-time">--:--</div>
+                    <button id="checkin-btn" class="mt-3 btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-sign-in-alt mr-2"></i> เช็คอิน</button>
+                  </div>
+                  <div class="text-center">
+                    <p class="text-sm text-gray-500 mb-1">เวลาออกงาน</p>
+                    <div class="text-xl font-bold text-gray-800 dark:text-gray-100" id="checkout-time">--:--</div>
+                    <button id="checkout-btn" class="mt-3 btn px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800" disabled><i class="fas fa-sign-out-alt mr-2"></i> เช็คเอาท์</button>
+                  </div>
+                </div>
+                <div class="mt-6 text-center">
+                  <p class="text-sm text-gray-500 mb-1">สถานที่ทำงาน</p>
+                  <div class="text-gray-800 dark:text-gray-100" id="work-location">สำนักงานใหญ่</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass card rounded-xl p-6">
+              <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">ประวัติการเข้า-ออกงาน</h2>
+              <div class="overflow-y-auto max-h-64">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead>
+                    <tr>
+                      <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่</th>
+                      <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">เช็คอิน</th>
+                      <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">เช็คเอาท์</th>
+                      <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="attendance-history" class="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-100 dark:divide-gray-800"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass card rounded-xl p-6">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">ปฏิทินการทำงาน</h2>
+            <div id="work-calendar" class="grid grid-cols-7 gap-1"></div>
+          </div>
+        </div>
+
+        <!-- Leave Management Page -->
+        <div id="leave-page" class="page hidden">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 md:mb-0">ระบบลา</h1>
+            <button id="leave-form-open" class="btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-plus mr-2"></i> ยื่นคำขอลา</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" id="leave-counters"></div>
+
+          <div class="glass card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">คำขอลาล่าสุด</h2>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">พนักงาน</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภทการลา</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่เริ่ม</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่สิ้นสุด</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนวัน</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เหตุผล</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="leaves-table" class="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-100 dark:divide-gray-800"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="leave-form" class="hidden glass card rounded-xl p-6">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">ยื่นคำขอลา</h2>
+            <form id="leave-request-form" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">ประเภทการลา</label>
+                  <select id="leave-type" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="personal">ลากิจ</option>
+                    <option value="sick">ลาป่วย</option>
+                    <option value="vacation">ลาพักร้อน</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">จำนวนวัน</label>
+                  <input id="leave-days" type="number" min="1" value="1" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">วันที่เริ่ม</label>
+                  <input id="leave-start" type="date" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">วันที่สิ้นสุด</label>
+                  <input id="leave-end" type="date" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">เหตุผลการลา</label>
+                <textarea id="leave-reason" rows="3" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+              </div>
+              <div class="flex justify-end gap-2">
+                <button type="button" id="leave-form-cancel" class="btn px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700">ยกเลิก</button>
+                <button type="submit" class="btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">ส่งคำขอลา</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Employee Profile Page (HR Only) -->
+        <div id="employee-profile-page" class="page hidden">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 md:mb-0">ข้อมูลพนักงาน</h1>
+            <button id="add-employee-open" class="btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-user-plus mr-2"></i> เพิ่มพนักงานใหม่</button>
+          </div>
+          <div class="glass card rounded-xl p-4 mb-6">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">พนักงาน</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ตำแหน่ง</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">แผนก</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันเริ่มงาน</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อีเมล</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">เบอร์โทร</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="employees-table" class="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-100 dark:divide-gray-800"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="add-employee-form" class="hidden glass card rounded-xl p-6">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">เพิ่มพนักงานใหม่</h2>
+            <form id="new-employee-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input id="emp-code" type="text" placeholder="รหัสพนักงาน (เช่น EMP001)" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-firstname" type="text" placeholder="ชื่อ" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-lastname" type="text" placeholder="นามสกุล" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-email" type="email" placeholder="อีเมล" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-phone" type="tel" placeholder="เบอร์โทรศัพท์" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-start" type="date" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-dept" type="text" placeholder="แผนก" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <input id="emp-title" type="text" placeholder="ตำแหน่ง" class="w-full border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/60 rounded-lg p-2">
+              <div class="col-span-1 md:col-span-2 flex justify-end gap-2 mt-2">
+                <button type="button" id="add-employee-cancel" class="btn px-4 py-2 bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg">ยกเลิก</button>
+                <button type="submit" class="btn px-4 py-2 bg-blue-600 text-white rounded-lg">บันทึก</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Permissions Page -->
+        <div id="permissions-page" class="page hidden">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4 md:mb-0">สิทธิ์การเข้าถึง</h1>
+            <button class="btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><i class="fas fa-plus mr-2"></i> เพิ่มสิทธิ์ใหม่</button>
+          </div>
+          <div class="glass card rounded-xl p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">กลุ่มสิทธิ์การเข้าถึง</h2>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead>
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อกลุ่มสิทธิ์</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">คำอธิบาย</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนผู้ใช้</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="roles-table" class="bg-white/60 dark:bg-gray-900/40 divide-y divide-gray-100 dark:divide-gray-800">
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center mr-3"><i class="fas fa-user-shield text-red-600"></i></div><div class="text-sm font-medium text-gray-900 dark:text-gray-100">ผู้ดูแลระบบ</div></div></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">เข้าถึงทุกฟังก์ชันในระบบ</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700 dark:text-gray-300">—</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm"><button class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></button><button class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></button><button class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button></td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center mr-3"><i class="fas fa-user-tie text-blue-600"></i></div><div class="text-sm font-medium text-gray-900 dark:text-gray-100">HR Admin</div></div></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">จัดการข้อมูลพนักงานและการลา</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700 dark:text-gray-300">—</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm"><button class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></button><button class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></button><button class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button></td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap"><div class="flex items-center"><div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3"><i class="fas fa-user text-green-600"></i></div><div class="text-sm font-medium text-gray-900 dark:text-gray-100">พนักงาน</div></div></td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">เข้าถึงข้อมูลส่วนตัวและการลา</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700 dark:text-gray-300">—</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm"><button class="text-blue-600 hover:text-blue-800 mr-2"><i class="fas fa-eye"></i></button><button class="text-yellow-600 hover:text-yellow-800 mr-2"><i class="fas fa-edit"></i></button><button class="text-red-600 hover:text-red-800"><i class="fas fa-trash-alt"></i></button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-storage-compat.js"></script>
+  <script src="./firebase.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
