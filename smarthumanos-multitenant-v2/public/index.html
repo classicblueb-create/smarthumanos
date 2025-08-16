@@ -1,0 +1,36 @@
+
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartHumanOS</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="/firebase.js" defer></script>
+  <script src="/app.js" defer></script>
+  <style>
+    body{font-family:system-ui,sans-serif; max-width:860px; margin:40px auto; padding:0 16px;}
+    .card{border:1px solid #eee; padding:16px; border-radius:12px; margin:12px 0;}
+    .muted{color:#666}
+    code{background:#f7f7f7;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <h1>SmartHumanOS</h1>
+  <p class="muted">Multi-tenant HR web app (Firebase)</p>
+
+  <div class="card">
+    <button id="gotoSignup">สมัครใช้งาน</button>
+    <button id="signout" style="display:none">ออกจากระบบ</button>
+    <div id="who" class="muted"></div>
+    <div id="ten" class="muted"></div>
+  </div>
+
+  <div class="card">
+    <h3>Attendance (ตัวอย่าง)</h3>
+    <pre id="attn">(ล็อกอินก่อน)</pre>
+  </div>
+</body>
+</html>

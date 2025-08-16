@@ -1,0 +1,14 @@
+{
+  "name": "functions",
+  "engines": {
+    "node": "18"
+  },
+  "scripts": {
+    "build": "echo Skip",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.5.0",
+    "firebase-functions": "^5.0.1"
+  }
+}
