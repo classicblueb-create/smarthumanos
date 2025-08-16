@@ -1,0 +1,83 @@
+
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>สมัครใช้งาน • SmartHumanOS</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+  <script src="/firebase.js" defer></script>
+  <style>
+    body{font-family:system-ui,sans-serif; max-width:560px; margin:40px auto; padding:0 16px;}
+    label{display:block;margin:12px 0 6px;}
+    input,button{width:100%; padding:12px; font-size:16px;}
+    .hint{color:#666; font-size:13px}
+  </style>
+</head>
+<body>
+  <h1>สมัครใช้งาน</h1>
+
+  <label>อีเมล</label>
+  <input id="email" type="email" placeholder="you@company.com" required />
+
+  <label>รหัสผ่าน</label>
+  <input id="password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" required />
+
+  <label>ชื่อบริษัท</label>
+  <input id="company" list="company-list" placeholder="พิมพ์ชื่อบริษัทของคุณ" autocomplete="organization" />
+  <datalist id="company-list"></datalist>
+  <div class="hint">ถ้ามีชื่อที่เคยสร้างไว้ ระบบจะแนะนำให้เลือก เพื่อเข้าบริษัทเดียวกัน</div>
+
+  <div style="margin:16px 0">
+    <button id="signup">สมัครและเข้าร่วม/สร้างบริษัท</button>
+  </div>
+
+  <script>
+    function normalizeName(s){
+      return (s||'').toLowerCase().normalize('NFKD').replace(/[^\p{Letter}\p{Number}]+/gu,' ').trim();
+    }
+    function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+    const companyInput = document.getElementById('company');
+    const dl = document.getElementById('company-list');
+
+    const suggest = debounce(async ()=>{
+      const qText = companyInput.value.trim();
+      const qNorm = normalizeName(qText);
+      dl.innerHTML = '';
+      if(!qNorm) return;
+      const snap = await DB.collection('tenantNames')
+        .orderBy('nameLower')
+        .startAt(qNorm).endAt(qNorm + '\\uf8ff')
+        .limit(8).get();
+      snap.forEach(doc=>{
+        const opt = document.createElement('option');
+        opt.value = doc.data().name;
+        dl.appendChild(opt);
+      });
+    }, 220);
+    companyInput.addEventListener('input', suggest);
+
+    document.getElementById('signup').addEventListener('click', async ()=>{
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const companyName = companyInput.value.trim();
+      if(!email || !password || !companyName){ alert('กรอกข้อมูลให้ครบถ้วน'); return; }
+      try{
+        await Auth.createUserWithEmailAndPassword(email, password);
+        const callable = firebase.functions().httpsCallable('createOrJoinTenant');
+        const res = await callable({ companyName });
+        // refresh token to receive custom claims (tenantId, role)
+        await firebase.auth().currentUser.getIdToken(true);
+        sessionStorage.setItem('TENANT_ID', res.data.tenantId);
+        location.href = '/index.html';
+      }catch(err){
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

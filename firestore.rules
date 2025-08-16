@@ -1,0 +1,61 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function roleInTenant(tenantId, uid) {
+      return get(/databases/$(database)/documents/tenants/$(tenantId)/profiles/$(uid)).data.role;
+    }
+    function isHR(tenantId, uid) {
+      return roleInTenant(tenantId, uid) in ['owner','admin','hr'];
+    }
+
+    match /tenantDomains/{domain} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /tenantNames/{slug} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /tenants/{tenantId} {
+      match /profiles/{uid} {
+        allow read: if signedIn() && (uid == request.auth.uid || isHR(tenantId, request.auth.uid));
+        allow create: if signedIn() && (uid == request.auth.uid || isHR(tenantId, request.auth.uid))
+                       && request.resource.data.tenantId == tenantId;
+        allow update: if signedIn() && (uid == request.auth.uid || isHR(tenantId, request.auth.uid))
+                       && resource.data.tenantId == tenantId
+                       && request.resource.data.tenantId == tenantId;
+      }
+
+      match /attendance/{docId} {
+        allow read: if signedIn() && resource.data.tenantId == tenantId &&
+                     (resource.data.uid == request.auth.uid || isHR(tenantId, request.auth.uid));
+        allow create: if signedIn() && request.resource.data.tenantId == tenantId;
+        allow update, delete: if signedIn() && resource.data.tenantId == tenantId &&
+                               ((resource.data.uid == request.auth.uid && resource.data.status == 'pending') ||
+                                 isHR(tenantId, request.auth.uid));
+      }
+
+      match /leaves/{docId} {
+        allow read: if signedIn() && resource.data.tenantId == tenantId &&
+                     (resource.data.uid == request.auth.uid || isHR(tenantId, request.auth.uid));
+        allow create: if signedIn() && request.resource.data.tenantId == tenantId &&
+                       request.resource.data.uid == request.auth.uid;
+        allow update, delete: if signedIn() && resource.data.tenantId == tenantId &&
+                               ((resource.data.uid == request.auth.uid && resource.data.status == 'pending') ||
+                                 isHR(tenantId, request.auth.uid));
+      }
+
+      match /employees/{empId} {
+        allow read, write, delete: if signedIn() && isHR(tenantId, request.auth.uid);
+      }
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && uid == request.auth.uid;
+    }
+  }
+}
